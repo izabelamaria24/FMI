@@ -1,0 +1,3 @@
+['poate', 'nu', 'nu', 'nu', 'if', 'if', 'ddaaaaa', 'da', 'da']
+['da', 'da', 'if', 'if', 'nu', 'nu', 'nu', 'poate', 'ddaaaaa']
+['da', 'da', 'if', 'if', 'nu', 'nu', 'nu', 'poate', 'ddaaaaa']
