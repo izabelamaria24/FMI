@@ -23,6 +23,9 @@
     dirx: .long -1, -1, -1, 0, 1, 1, 1, 0
     diry: .long -1, 0, 1, 1, 1, 0, -1, -1
 
+    l1: .long 0
+    c1: .long 0
+
     vecini: .long 0
 
 .text
@@ -152,7 +155,6 @@ main:
         cmp %ecx, k
         je for_printf
 
-
         movl $1, linie
 
         for_lines:
@@ -229,12 +231,45 @@ main:
         
         increment_k: 
             incl s
-            jmp for_states
+            jmp copiere_stare
+
+
+    copiere_stare:
+        movl $1, l1
+        lea stateMatrix, %edi
+
+        for_copiere_linie:
+            movl l1, %ecx
+            cmp m, %ecx
+            je for_states
+
+            movl $1, c1
+            for_copiere_coloana:
+                movl c1, %ecx
+                cmp n, %ecx
+                je inc_linie_copiere
+
+                lea stateMatrix, %edi
+                movl l1, %eax
+                mull n
+                addl c1, %eax
+
+                movl (%edi, %eax, 4), %ebx
+                lea matrix, %edi
+                movl %ebx, (%edi, %eax, 4)
+
+                incl c1
+                jmp for_copiere_coloana
+
+        
+        inc_linie_copiere:
+            incl l1
+            jmp for_copiere_linie
 
 
     for_printf:
         movl $1, linie
-        lea stateMatrix, %edi
+        lea matrix, %edi
 
         for_afisare_linie:
             movl linie, %ecx
