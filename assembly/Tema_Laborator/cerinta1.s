@@ -10,7 +10,7 @@
 
     # variabile cu rol de contor
     i: .long 0 
-    j: .long 0
+    s: .long 0
 
     # variabile pentru citirea liniei si coloanei fiecarei celule vii
     linie: .space 4
@@ -21,7 +21,7 @@
 
     # cei 2 vectori de directie pentru verificarea vecinilor
     dirx: .long -1, -1, -1, 0, 1, 1, 1, 0
-    diry: .long -1, 0, -1, 1, 1, 0, -1, -1
+    diry: .long -1, 0, 1, 1, 1, 0, -1, -1
 
     vecini: .long 0
 
@@ -38,23 +38,26 @@ verificare_vecini:
         cmp %ecx, i
         je final
 
+       
         lea dirx, %edi
         movl i, %edx
-        movl (%edi, %edx, 4), %eax
-        movl 4(%ebp), %ebx
+        movl (%edi, %edx, 4), %ebx
+        movl 8(%ebp), %eax
 
-        add %eax, %ebx # linie
+        add %ebx, %eax # linie
+
+        
 
         lea diry, %edi
-        movl i, %edx
-        movl (%edi, %edx, 4), %eax
-        movl 8(%ebp), %edx
+        movl i, %ecx
+        movl (%edi, %ecx, 4), %ebx
+        movl 12(%ebp), %ecx
 
-        add %eax, %edx # coloana
+        add %ecx, %ebx # coloana
 
         lea matrix, %edi
         mull n
-        addl %edx, %eax
+        addl %ebx, %eax
 
         movl (%edi, %eax, 4), %ebx
 
@@ -62,8 +65,10 @@ verificare_vecini:
         movl $1, %ecx
         cmp %ebx, %ecx
         je increment
+        jmp start
     
     final:
+        popl %ebp
         ret
     
     increment:
@@ -99,12 +104,12 @@ main:
     incl m
 
     # pornim cu indexul de la 0 si marcam in matrice cele p celule vii cu valoarea 1
-    movl $0, index
+    movl $0, i
 
     for_loop:
         movl i, %ecx
         cmp %ecx, p
-        je et_exit
+        je citire_k
 
         pushl $linie
         pushl $formatScanf
@@ -134,14 +139,21 @@ main:
         incl i
         jmp for_loop
     
+    citire_k:
+    pushl $k
+    pushl $formatScanf
+    call scanf
+    popl %ebx
+    popl %ebx  
+
 
     for_states: 
-        movl j, %ecx
+        movl s, %ecx
         cmp %ecx, k
         je for_printf
 
+
         movl $1, linie
-        movl $1, coloana
 
         for_lines:
             movl linie, %ecx
@@ -161,6 +173,7 @@ main:
             movl $0, vecini
             pushl coloana
             pushl linie
+
             call verificare_vecini
             popl %ebx
             popl %ebx
@@ -202,7 +215,7 @@ main:
                 jmp moare
             
             moare:
-                l %ebx
+                decl %ebx
                 jmp et1
 
             invie:
@@ -215,13 +228,14 @@ main:
             jmp for_lines
         
         increment_k: 
-            incl k
+            incl s
             jmp for_states
 
 
-    movl $1, linie
-
     for_printf:
+        movl $1, linie
+        lea stateMatrix, %edi
+
         for_afisare_linie:
             movl linie, %ecx
             cmp m, %ecx
