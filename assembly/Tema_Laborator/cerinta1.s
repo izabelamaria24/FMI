@@ -20,8 +20,8 @@
     stateMatrix: .space 1600
 
     # cei 2 vectori de directie pentru verificarea vecinilor
-    dirx: .long -1 -1 -1 0 1 1 1 0
-    diry: .long -1 0 -1 1 1 0 -1 -1
+    dirx: .long -1, -1, -1, 0, 1, 1, 1, 0
+    diry: .long -1, 0, -1, 1, 1, 0, -1, -1
 
     vecini: .long 0
 
@@ -32,20 +32,22 @@ verificare_vecini:
     pushl %ebp
     mov %esp, %ebp
 
-    xor i, i
+    movl $0, i
     start:
         movl $8, %ecx
         cmp %ecx, i
         je final
 
         lea dirx, %edi
-        movl (%edi, i, 4), %eax
+        movl i, %edx
+        movl (%edi, %edx, 4), %eax
         movl 4(%ebp), %ebx
 
         add %eax, %ebx # linie
 
         lea diry, %edi
-        movl (%edi, i, 4), %eax
+        movl i, %edx
+        movl (%edi, %edx, 4), %eax
         movl 8(%ebp), %edx
 
         add %eax, %edx # coloana
@@ -97,7 +99,7 @@ main:
     incl m
 
     # pornim cu indexul de la 0 si marcam in matrice cele p celule vii cu valoarea 1
-    xor index, index
+    movl $0, index
 
     for_loop:
         movl i, %ecx
@@ -138,10 +140,8 @@ main:
         cmp %ecx, k
         je for_printf
 
-        xor linie, linie
-        xor coloana, coloana
-        incl linie
-        incl coloana
+        movl $1, linie
+        movl $1, coloana
 
         for_lines:
             movl linie, %ecx
@@ -158,7 +158,7 @@ main:
 
             # verificam cei 8 vecini
             
-            xor vecini, vecini
+            movl $0, vecini
             pushl coloana
             pushl linie
             call verificare_vecini
@@ -202,7 +202,7 @@ main:
                 jmp moare
             
             moare:
-                subl %ebx
+                decl %ebx
                 jmp et1
 
             invie:
