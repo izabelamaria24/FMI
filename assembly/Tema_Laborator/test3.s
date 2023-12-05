@@ -7,6 +7,7 @@
     formatScanf: .asciz "%ld" # format string pentru apelarea scanf pentru intregi
     formatScanfString: .asciz "%s" # format string pentru apelarea scanf pentru strings
     formatPrintf: .asciz "%ld " # format string pentru apelarea printf
+    formatPrintfString: .asciz "%c"
     newL: .asciz "/n" # new line
 
     # variabile cu rol de contor
@@ -33,11 +34,12 @@
     lungimeMesaj: .long 0
     it: .long 0
 
-    rezultat: .space 20
+    itRezultat: .long 0
+    rezultat: .space 15
     criptareAux: .byte 0
     dimensiuneMatrice: .long 0
     dimensiuneCheie: .long 0
-    itTotal: .long 0
+    itTotal: .long 
 
 .text
 
@@ -88,6 +90,25 @@ verificare_vecini:
     increment:
         incl vecini
         jmp start
+
+transformare_hexa:
+   verificare_ebx:
+        cmp $9, %ebx
+        jg modificare_ebx
+        jmp verificare_eax
+
+    modificare_ebx:
+        addl $55, %ebx
+
+    verificare_eax:
+        cmp $9, %eax
+        jg modificare_eax
+        ret
+
+    modificare_eax:
+        addl $55, %eax
+    ret    
+
     
 
 
@@ -176,7 +197,9 @@ main:
 
         for_lines:
             movl linie, %ecx
-            cmp %ecx, m 
+            mov m, %edx
+            dec %edx
+            cmp %ecx, %edx
             je increment_k
 
             movl $1, coloana
@@ -184,7 +207,9 @@ main:
         for_columns:
             lea matrix, %edi
             movl coloana, %ecx
-            cmp %ecx, n
+            mov n, %edx
+            dec %edx
+            cmp %ecx, %edx
             je increment_line
 
             # verificam cei 8 vecini
@@ -257,13 +282,17 @@ main:
 
         for_copiere_linie:
             movl l1, %ecx
-            cmp m, %ecx
+            mov m, %edx
+            dec %edx
+            cmp %edx, %ecx
             je for_states
 
             movl $1, c1
             for_copiere_coloana:
                 movl c1, %ecx
-                cmp n, %ecx
+                mov n, %edx
+                dec %edx
+                cmp %edx, %ecx
                 je inc_linie_copiere
 
                 lea stateMatrix, %edi
@@ -333,7 +362,7 @@ main:
         cmp %ebx, o
 
         je criptare
-        jmp decriptare
+        jmp et_exit 
 
     criptare:
         movl $0, i # indice pentru parcurgerea matricei
@@ -387,20 +416,32 @@ main:
             shr $4, %bl # primul caracter
             and $0x0F, %al # al doilea caracter
 
-            push %ebx
-            push $formatPrintf
-            call printf
-            pop %ebx
-            pop %ebx
+            call transformare_hexa
 
+            lea rezultat, %edi
+            movl itRezultat, %ecx
+
+            movb %bl, (%edi, %ecx, 1)
+            inc %ecx
+            movb %al, (%edi, %ecx, 1)
+
+            addl $2, itRezultat
+
+            push (%edi, %ecx, 1)
+            push $formatPrintfString
+            call printf
+            pop %edx
+            pop %edx
+        
             push $0
             call fflush
-            pop %ebx
-
+            pop %edx
+           
             mov itTotal, %ecx
             cmp dimensiuneCheie, %ecx
-            je et_exit
+            je afisare_parola
             
+            movb $0, criptareAux
             movl $0, i
             incl s
             mov s, %ecx
@@ -413,7 +454,17 @@ main:
 
             jmp loop_criptare
 
-    decriptare:
+
+    afisare_parola:
+        push $rezultat
+        push $formatPrintfString
+        call printf
+        pop %ebx
+        pop %ebx
+    
+        push $0
+        call fflush
+        pop %ebx
 
     et_exit:
         mov $1, %eax
