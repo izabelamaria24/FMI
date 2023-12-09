@@ -10,7 +10,7 @@
 
     # variabile cu rol de contor
     i: .long 0 
-    j: .long 0
+    s: .long 0
 
     # variabile pentru citirea liniei si coloanei fiecarei celule vii
     linie: .space 4
@@ -20,10 +20,18 @@
     stateMatrix: .space 1600
 
     # cei 2 vectori de directie pentru verificarea vecinilor
-    dirx: .long -1 -1 -1 0 1 1 1 0
-    diry: .long -1 0 -1 1 1 0 -1 -1
+    dirx: .long -1, -1, -1, 0, 1, 1, 1, 0
+    diry: .long -1, 0, 1, 1, 1, 0, -1, -1
+
+    l1: .long 0
+    c1: .long 0
 
     vecini: .long 0
+
+    o: .space 4
+    m: .space 20
+    lungime_mesaj: .long 0
+    ch_matrix: .space 1600
 
 .text
 
@@ -32,27 +40,32 @@ verificare_vecini:
     pushl %ebp
     mov %esp, %ebp
 
-    xor i, i
+    movl $0, i
     start:
         movl $8, %ecx
         cmp %ecx, i
         je final
 
+       
         lea dirx, %edi
-        movl (%edi, i, 4), %eax
-        movl 4(%ebp), %ebx
+        movl i, %edx
+        movl (%edi, %edx, 4), %ebx
+        movl 8(%ebp), %eax
 
-        add %eax, %ebx # linie
+        add %ebx, %eax # linie
+
+        
 
         lea diry, %edi
-        movl (%edi, i, 4), %eax
-        movl 8(%ebp), %edx
+        movl i, %ecx
+        movl (%edi, %ecx, 4), %ebx
+        movl 12(%ebp), %ecx
 
-        add %eax, %edx # coloana
+        add %ecx, %ebx # coloana
 
         lea matrix, %edi
         mull n
-        addl %edx, %eax
+        addl %ebx, %eax
 
         movl (%edi, %eax, 4), %ebx
 
@@ -60,8 +73,10 @@ verificare_vecini:
         movl $1, %ecx
         cmp %ebx, %ecx
         je increment
+        jmp start
     
     final:
+        popl %ebp
         ret
     
     increment:
@@ -97,12 +112,12 @@ main:
     incl m
 
     # pornim cu indexul de la 0 si marcam in matrice cele p celule vii cu valoarea 1
-    xor index, index
+    movl $0, i
 
     for_loop:
         movl i, %ecx
         cmp %ecx, p
-        je et_exit
+        je citire_k
 
         pushl $linie
         pushl $formatScanf
@@ -131,17 +146,37 @@ main:
 
         incl i
         jmp for_loop
+
+    
+    citire_k:
+        pushl $k
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx 
+    
+    citire_o:
+        pushl $o
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx
+
+    citire_mesaj:
+        pushl $m
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx
     
 
+
     for_states: 
-        movl j, %ecx
+        movl s, %ecx
         cmp %ecx, k
         je for_printf
 
-        xor linie, linie
-        xor coloana, coloana
-        incl linie
-        incl coloana
+        movl $1, linie
 
         for_lines:
             movl linie, %ecx
@@ -158,9 +193,10 @@ main:
 
             # verificam cei 8 vecini
             
-            xor vecini, vecini
+            movl $0, vecini
             pushl coloana
             pushl linie
+
             call verificare_vecini
             popl %ebx
             popl %ebx
@@ -202,7 +238,7 @@ main:
                 jmp moare
             
             moare:
-                subl %ebx
+                decl %ebx
                 jmp et1
 
             invie:
@@ -215,46 +251,42 @@ main:
             jmp for_lines
         
         increment_k: 
-            incl k
-            jmp for_states
+            incl s
+            jmp copiere_stare
 
 
-    movl $1, linie
+    copiere_stare:
+        movl $1, l1
+        lea stateMatrix, %edi
 
-    for_printf:
-        for_afisare_linie:
-            movl linie, %ecx
+        for_copiere_linie:
+            movl l1, %ecx
             cmp m, %ecx
-            je et_exit
+            je for_states
 
-            movl $1, coloana
-            for_afisare_coloana: 
-                movl coloana, %ecx
+            movl $1, c1
+            for_copiere_coloana:
+                movl c1, %ecx
                 cmp n, %ecx
-                je inc_linie_afisare
+                je inc_linie_copiere
 
-                movl linie, %eax
+                lea stateMatrix, %edi
+                movl l1, %eax
                 mull n
-                addl coloana, %eax
+                addl c1, %eax
 
                 movl (%edi, %eax, 4), %ebx
-                pushl %ebx
-                pushl $formatPrintf
-                call printf
+                lea matrix, %edi
+                movl %ebx, (%edi, %eax, 4)
 
-                popl %edx
-                popl %edx
+                incl c1
+                jmp for_copiere_coloana
 
-                pushl $0  
-                call fflush
-                popl %edx
+        
+        inc_linie_copiere:
+            incl l1
+            jmp for_copiere_linie
 
-                incl coloana
-                jmp for_afisare_coloana
-            
-            inc_linie_afisare:
-                incl linie
-                jmp for_afisare_linie
 
 
     et_exit:
