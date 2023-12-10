@@ -28,6 +28,11 @@
 
     vecini: .long 0
 
+    o: .space 4
+    m: .space 20
+    lungime_mesaj: .long 0
+    ch_matrix: .space 1600
+
 .text
 
 # functie verificare vecini
@@ -141,6 +146,28 @@ main:
 
         incl i
         jmp for_loop
+
+    
+    citire_k:
+        pushl $k
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx 
+    
+    citire_o:
+        pushl $o
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx
+
+    citire_mesaj:
+        pushl $m
+        pushl $formatScanf
+        call scanf
+        popl %ebx
+        popl %ebx
     
     citire_k:
     pushl $k
@@ -148,6 +175,7 @@ main:
     call scanf
     popl %ebx
     popl %ebx  
+
 
 
     for_states: 
@@ -274,36 +302,31 @@ main:
         for_afisare_linie:
             movl linie, %ecx
             cmp m, %ecx
-            je et_exit
+            je for_states
 
-            movl $1, coloana
-            for_afisare_coloana: 
-                movl coloana, %ecx
+            movl $1, c1
+            for_copiere_coloana:
+                movl c1, %ecx
                 cmp n, %ecx
-                je inc_linie_afisare
+                je inc_linie_copiere
 
-                movl linie, %eax
+                lea stateMatrix, %edi
+                movl l1, %eax
                 mull n
-                addl coloana, %eax
+                addl c1, %eax
 
                 movl (%edi, %eax, 4), %ebx
-                pushl %ebx
-                pushl $formatPrintf
-                call printf
+                lea matrix, %edi
+                movl %ebx, (%edi, %eax, 4)
 
-                popl %edx
-                popl %edx
+                incl c1
+                jmp for_copiere_coloana
 
-                pushl $0  
-                call fflush
-                popl %edx
+        
+        inc_linie_copiere:
+            incl l1
+            jmp for_copiere_linie
 
-                incl coloana
-                jmp for_afisare_coloana
-            
-            inc_linie_afisare:
-                incl linie
-                jmp for_afisare_linie
 
 
     et_exit:
