@@ -2,21 +2,24 @@
     m: .space 5 # numarul de linii
     n: .space 5 # numarul de coloane
     p: .space 5 # numarul de celule vii
-    matrix: .space 1601
+    matrix: .space 1600
     k: .space 5
     formatScanf: .asciz "%ld" # format string pentru apelarea scanf pentru intregi
     formatScanfString: .asciz "%s" # format string pentru apelarea scanf pentru strings
     formatPrintf: .asciz "%ld " # format string pentru apelarea printf
     formatPrintfString: .asciz "%s"
     newL: .asciz "/n" # new line
+    o: .space 4
+    mesaj: .space 20
 
     # variabile cu rol de contor
     i: .long 0 
     s: .long 0
 
-    # variabile pentru citirea liniei si coloanei fiecarei celule vii
     linie: .space 4
     coloana: .space 4
+    l1: .long 0
+    c1: .long 0
 
     # matricea de stare
     stateMatrix: .space 1600
@@ -25,12 +28,7 @@
     dirx: .long -1, -1, -1, 0, 1, 1, 1, 0
     diry: .long -1, 0, 1, 1, 1, 0, -1, -1
 
-    l1: .long 0
-    c1: .long 0
-
     vecini: .long 0
-    o: .space 4
-    mesaj: .space 20
     lungimeMesaj: .long 0
     it: .long 0
 
@@ -53,7 +51,6 @@ verificare_vecini:
         movl $8, %ecx
         cmp %ecx, i
         je final
-
        
         lea dirx, %edi
         movl i, %edx
@@ -61,8 +58,6 @@ verificare_vecini:
         movl 8(%ebp), %eax
 
         add %ebx, %eax # linie
-
-        
 
         lea diry, %edi
         movl i, %ecx
@@ -91,51 +86,75 @@ verificare_vecini:
         incl vecini
         jmp start
 
-transformare_hexa_criptare:
-   verificare_ebx_c:
-        cmp $9, %ebx
-        jg modificare_ebx_c
 
-        addl $48, %ebx
-        jmp verificare_eax
+transf_hexa_criptare:
+    pushl %ebp
+    mov %esp, %ebp
 
-    modificare_ebx_c:
-        addl $55, %ebx
+    mov 8(%ebp), %eax
 
-    verificare_eax:
-        cmp $9, %eax
-        jg modificare_eax
+    cmp $9, %eax
+    jg modif
 
-        addl $48, %eax
+    addl $48, %eax
+    jmp final_ret_c
+
+    modif:
+        add $55, %eax
+
+    final_ret_c:
+        popl %ebp
         ret
 
-    modificare_eax:
-        addl $55, %eax
-    ret    
+transf_hexa_decriptare:
+    pushl %ebp
+    mov %esp, %ebp
+    
+    mov 8(%ebp), %eax
 
-transformare_hexa_decriptare:
-    verificare_ebx:
-        cmp $65, %ebx
-        jge modificare_ebx
+    cmp $65, %eax
+    jge modifd
 
-        subl $48, %ebx
-        jmp verificare_ecx
+    subl $48, %eax
+    jmp final_ret_d
 
-    modificare_ebx:
-        subl $55, %ebx
+    modifd:
+        subl $55, %eax
 
-    verificare_ecx:
-        cmp $65, %ecx
-        jge modificare_ecx
-
-        subl $48, %ecx
+    final_ret_d:
+        popl %ebp
         ret
 
-    modificare_ecx:
-        subl $55, %ecx
+
+extragere_caracter_matrice:
+    lea matrix, %edi
+    xor %eax, %eax
+    movl it, %ebx
+    movb (%edi, %ebx, 4), %al
+
+    xor %edx, %edx
+    mov $7, %cl
+    subb i, %cl
+    movb %al, %bl
+
+    shl %cl, %bl
+    addb %bl, criptareAux
+
+    incl i
+    incl it
+    incl itTotal
+
+    movl it, %ecx
     ret
 
 
+adaugare_0x:
+    lea rezultat, %edi
+    xor %ecx, %ecx
+    movb $48, (%edi, %ecx, 1)
+    inc %ecx
+    movb $120, (%edi, %ecx, 1)
+    ret 
 
 .global main
 main: 
@@ -143,23 +162,19 @@ main:
     pushl $m
     pushl $formatScanf
     call scanf
-    popl %ebx
-    popl %ebx
+    add $8, %esp
 
     # se citeste nr de coloane
     pushl $n
     pushl $formatScanf
     call scanf
-    popl %ebx
-    popl %ebx
+    add $8, %esp
 
     # se citeste nr de celule vii
     pushl $p
     pushl $formatScanf
     call scanf
-    popl %ebx
-    popl %ebx
-
+    add $8, %esp
 
     addl $2, n
     addl $2, m
@@ -167,7 +182,6 @@ main:
     movl m, %eax
     mull n
     mov %eax, dimensiuneMatrice
-
 
     # pornim cu indexul de la 0 si marcam in matrice cele p celule vii cu valoarea 1
     movl $0, i
@@ -180,14 +194,12 @@ main:
         pushl $linie
         pushl $formatScanf
         call scanf
-        popl %ebx
-        popl %ebx
+        add $8, %esp
 
         pushl $coloana
         pushl $formatScanf
         call scanf
-        popl %ebx
-        popl %ebx
+        add $8, %esp
 
         # pentru a putea lucra cu matricea extinsa, consideram linie + 1, respectiv coloana + 1 
         incl linie
@@ -209,8 +221,7 @@ main:
         pushl $k
         pushl $formatScanf
         call scanf
-        popl %ebx
-        popl %ebx  
+        add $8, %esp  
 
 
     for_states: 
@@ -337,20 +348,17 @@ main:
             incl l1
             jmp for_copiere_linie
 
-
     citire_o:
         push $o
         push $formatPrintf
         call scanf
-        pop %ebx
-        pop %ebx
+        add $8, %esp
 
     citire_mesaj:
         push $mesaj
         push $formatScanfString
         call scanf
-        pop %ebx
-        pop %ebx
+        add $8, %esp
     
     lea mesaj, %edi
     xor %ecx, %ecx
@@ -379,20 +387,10 @@ main:
         movl lungimeMesaj, %eax
         mov $8, %ecx
         mull %ecx
-
-        movl dimensiuneMatrice, %ebx
-        cmp %eax, %ebx
-        jge et_max_matrice
-
-        movl %eax, dimensiuneCheie
-        jmp branch_criptare
-        
-        et_max_matrice:
-            movl %ebx, dimensiuneCheie
-            jmp branch_criptare
-
+        mov %eax, dimensiuneCheie
 
     branch_criptare:
+        movl $0, i # indice pentru parcurgerea matricei
         xor %ebx, %ebx
         cmp %ebx, o
 
@@ -400,38 +398,17 @@ main:
         jmp decriptare
 
     criptare:
-        movl $0, i # indice pentru parcurgerea matricei
         movl $0, s # indice pentru parcurgerea fiecarui caracter din string
 
-        lea rezultat, %edi
-        xor %ecx, %ecx
-        movb $48, (%edi, %ecx, 1)
-        inc %ecx
-        movb $120, (%edi, %ecx, 1) 
-        
-        loop_criptare:
+        call adaugare_0x 
+
+     loop_criptare:
             movl $8, %ecx
             cmp i, %ecx
             je reset_loop_criptare
 
-            lea matrix, %edi
-            xor %eax, %eax
-            movl it, %ebx
-            movb (%edi, %ebx, 4), %al
+            call extragere_caracter_matrice
 
-            xor %edx, %edx
-            mov $7, %cl
-            subb i, %cl
-            movb %al, %bl
-
-            shl %cl, %bl
-            addb %bl, criptareAux
-
-            incl i
-            incl it
-            incl itTotal
-
-            movl it, %ecx
             cmp %ecx, dimensiuneMatrice
             je reset_it
 
@@ -457,17 +434,26 @@ main:
             shr $4, %bl # primul caracter
             and $0x0F, %al # al doilea caracter
 
-            call transformare_hexa_criptare
-
             lea rezultat, %edi
             movl itRezultat, %ecx
 
-            movb %bl, (%edi, %ecx, 1)
-            inc %ecx
-            movb %al, (%edi, %ecx, 1)
+            pushl %eax
+            pushl %ebx
+            call transf_hexa_criptare
+            add $4, %esp
 
-            addl $2, itRezultat
-           
+            movb %al, (%edi, %ecx, 1)
+            popl %eax
+
+            inc %ecx
+
+            pushl %eax
+            call transf_hexa_criptare
+            add $4, %esp
+
+            movb %al, (%edi, %ecx, 1)  
+
+            addl $2, itRezultat           
             mov itTotal, %ecx
             cmp dimensiuneCheie, %ecx
             je afisare_parola
@@ -486,7 +472,6 @@ main:
             jmp loop_criptare
 
     decriptare:
-        movl $0, i # indice pentru parcurgerea matricei
         movl $2, s # indice pentru parcurgerea fiecarui caracter din string
         movl $0, itRezultat
 
@@ -500,24 +485,8 @@ main:
             cmp i, %ecx
             je reset_loop_decriptare
 
-            lea matrix, %edi
-            xor %eax, %eax
-            movl it, %ebx
-            movb (%edi, %ebx, 4), %al
+            call extragere_caracter_matrice 
 
-            xor %edx, %edx
-            mov $7, %cl
-            subb i, %cl
-            movb %al, %bl
-
-            shl %cl, %bl
-            addb %bl, criptareAux
-
-            incl i
-            incl it
-            incl itTotal
-
-            movl it, %ecx
             cmp %ecx, dimensiuneMatrice
             je reset_it_d
 
@@ -534,14 +503,27 @@ main:
             xor %ecx, %ecx
             movb criptareAux, %al
 
-
             lea mesaj, %edi
             movl s, %edx
             movb (%edi, %edx, 1), %bl
             incl %edx
             movb (%edi, %edx, 1), %cl
 
-            call transformare_hexa_decriptare
+            pushl %eax
+            pushl %ebx
+            call transf_hexa_decriptare
+            add $4, %esp
+
+            mov %eax, %ebx
+            pop %eax
+
+            pushl %eax
+            pushl %ecx
+            call transf_hexa_decriptare
+            add $4, %esp
+
+            mov %eax, %ecx
+            pop %eax
 
             shl $4, %ebx
             addb %cl, %bl
@@ -570,17 +552,15 @@ main:
 
             jmp loop_decriptare
 
-
     afisare_parola:
         push $rezultat
         push $formatPrintfString
         call printf
-        pop %ebx
-        pop %ebx
+        add $8, %esp
     
         push $0
         call fflush
-        pop %ebx
+        add $4, %esp
 
     et_exit:
         mov $1, %eax
