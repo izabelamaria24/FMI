@@ -6,7 +6,8 @@
     k: .space 4
     formatScanf: .asciz "%ld" # format string pentru apelarea scanf
     formatPrintf: .asciz "%ld " # format string pentru apelarea printf
-    newL: .asciz "/n" # new line
+    formatPrintfString: .asciz "%s" # format string pentru apelarea printf pentru strings
+    newL: .asciz "\n" # new line
 
     # variabile cu rol de contor
     i: .long 0 
@@ -28,10 +29,13 @@
 
     vecini: .long 0
 
-    o: .space 4
-    m: .space 20
-    lungime_mesaj: .long 0
-    ch_matrix: .space 1600
+    # variabile pentru lucrul cu fisiere
+    fileNameRead: .asciz "in.txt"
+    fileNameWrite: .asciz "out.txt"
+    modeRead: .asciz "r"
+    modeWrite: .asciz "w"
+    fileHandleRead: .long 0
+    fileHandleWrite: .long 0
 
 .text
 
@@ -45,7 +49,6 @@ verificare_vecini:
         movl $8, %ecx
         cmp %ecx, i
         je final
-
        
         lea dirx, %edi
         movl i, %edx
@@ -53,8 +56,6 @@ verificare_vecini:
         movl 8(%ebp), %eax
 
         add %ebx, %eax # linie
-
-        
 
         lea diry, %edi
         movl i, %ecx
@@ -87,26 +88,43 @@ verificare_vecini:
 
 .global main
 main: 
+    # deschidem fisierul pentru citire
+    push $modeRead
+    push $fileNameRead
+    call fopen
+    mov %eax, fileHandleRead
+    add $8, %esp  
+    
+    # deschidem fisierul pentru afisare
+    push $modeWrite
+    push $fileNameWrite
+    call fopen
+    mov %eax, fileHandleWrite
+    add $8, %esp 
+
     # se citeste nr de linii
-    pushl $m
-    pushl $formatScanf
-    call scanf
-    popl %ebx
-    popl %ebx
+    lea m, %eax 
+    push %eax
+    push $formatScanf
+    push fileHandleRead
+    call fscanf
+    add $12, %esp
 
     # se citeste nr de coloane
-    pushl $n
-    pushl $formatScanf
-    call scanf
-    popl %ebx
-    popl %ebx
+    lea n, %eax 
+    push %eax
+    push $formatScanf
+    push fileHandleRead
+    call fscanf
+    add $12, %esp
 
     # se citeste nr de celule vii
-    pushl $p
-    pushl $formatScanf
-    call scanf
-    popl %ebx
-    popl %ebx
+    lea p, %eax 
+    push %eax
+    push $formatScanf
+    push fileHandleRead
+    call fscanf
+    add $12, %esp
 
     incl n
     incl m
@@ -119,17 +137,19 @@ main:
         cmp %ecx, p
         je citire_k
 
-        pushl $linie
-        pushl $formatScanf
-        call scanf
-        popl %ebx
-        popl %ebx
+        lea linie, %eax 
+        push %eax
+        push $formatScanf
+        push fileHandleRead
+        call fscanf
+        add $12, %esp
 
-        pushl $coloana
-        pushl $formatScanf
-        call scanf
-        popl %ebx
-        popl %ebx
+        lea coloana, %eax 
+        push %eax
+        push $formatScanf
+        push fileHandleRead
+        call fscanf
+        add $12, %esp
 
         # pentru a putea lucra cu matricea extinsa, consideram linie + 1, respectiv coloana + 1 
         incl linie
@@ -146,36 +166,15 @@ main:
 
         incl i
         jmp for_loop
-
     
+
     citire_k:
-        pushl $k
-        pushl $formatScanf
-        call scanf
-        popl %ebx
-        popl %ebx 
-    
-    citire_o:
-        pushl $o
-        pushl $formatScanf
-        call scanf
-        popl %ebx
-        popl %ebx
-
-    citire_mesaj:
-        pushl $m
-        pushl $formatScanf
-        call scanf
-        popl %ebx
-        popl %ebx
-    
-    citire_k:
-    pushl $k
-    pushl $formatScanf
-    call scanf
-    popl %ebx
-    popl %ebx  
-
+        lea k, %eax 
+        push %eax
+        push $formatScanf
+        push fileHandleRead
+        call fscanf
+        add $12, %esp
 
 
     for_states: 
@@ -187,7 +186,7 @@ main:
 
         for_lines:
             movl linie, %ecx
-            cmp %ecx, m 
+            cmp %ecx, m
             je increment_k
 
             movl $1, coloana
@@ -302,34 +301,48 @@ main:
         for_afisare_linie:
             movl linie, %ecx
             cmp m, %ecx
-            je for_states
+            je et_exit
 
-            movl $1, c1
-            for_copiere_coloana:
-                movl c1, %ecx
+            movl $1, coloana
+            for_afisare_coloana: 
+                movl coloana, %ecx
                 cmp n, %ecx
-                je inc_linie_copiere
+                je inc_linie_afisare
 
-                lea stateMatrix, %edi
-                movl l1, %eax
+                movl linie, %eax
                 mull n
-                addl c1, %eax
+                addl coloana, %eax
 
-                movl (%edi, %eax, 4), %ebx
-                lea matrix, %edi
-                movl %ebx, (%edi, %eax, 4)
+                push (%edi, %eax, 4)
+                push $formatPrintf
+                push fileHandleWrite
+                call fprintf
+                add $12, %esp
 
-                incl c1
-                jmp for_copiere_coloana
+                incl coloana
+                jmp for_afisare_coloana
+            
+            inc_linie_afisare:
+                incl linie
 
-        
-        inc_linie_copiere:
-            incl l1
-            jmp for_copiere_linie
-
+                push $newL
+                push $formatPrintfString
+                push fileHandleWrite
+                call fprintf
+                add $12, %esp
+            
+                jmp for_afisare_linie
 
 
     et_exit:
+        push fileHandleRead
+        call fclose
+        add $4, %esp 
+
+        push fileHandleWrite
+        call fclose
+        add $4, %esp 
+
         mov $1, %eax
         xor %ebx, %ebx
         int $0x80
