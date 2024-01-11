@@ -1,0 +1,17 @@
+Hapciu
+trambulina 20 15 25 30 25
+greutati 0.25 0.75 1.5 1.25
+Rusinosul
+greutati 1.0 0.5 1.25 1.5
+Mutulica
+greutati 0.75 0.25 1.0 0.25 1.25
+trambulina 35 20 20 15 30
+Inteleptul
+trambulina 20 30 25 15 15 20
+Voiosul
+greutati 1.25 1.5 1.75 1.0
+trambulina 25 30 35 40 20 30
+Somnorosul
+trambulina 15 25 20
+Morocanosul
+greutati 0.75 1.0 0.25 1.5 1.25
