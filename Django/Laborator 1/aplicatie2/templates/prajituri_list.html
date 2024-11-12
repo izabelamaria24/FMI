@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of Prajituri</title>
+</head>
+<body>
+    <h1>All Prajituri</h1>
+    <ul>
+        {% for prajitura in prajituri %}
+            <li>
+                <h2>{{ prajitura.nume }}</h2>
+                <p><strong>Description:</strong> {{ prajitura.descriere }}</p>
+                <p><strong>Price:</strong> {{ prajitura.pret }} RON</p>
+                <p><strong>Weight:</strong> {{ prajitura.gramaj }}g</p>
+                <p><strong>Type:</strong> {{ prajitura.get_tip_produs_display }}</p>
+                <p><strong>Calories:</strong> {{ prajitura.calorii }} kcal</p>
+                <p><strong>Category:</strong> {{ prajitura.get_categorie_display }}</p>
+                <p><strong>For Diabetics:</strong> {{ prajitura.pt_diabetici|yesno:"Yes,No" }}</p>
+                <p><strong>Date Added:</strong> {{ prajitura.data_adaugare }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
