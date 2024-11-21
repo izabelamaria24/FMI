@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django import forms
 
 class Author(models.Model):
     id = models.AutoField(primary_key=True)
@@ -47,3 +49,36 @@ class Inventory(models.Model):
 
     def __str__(self):
         return f"Inventory for {self.book.title}"
+
+
+class Mesaj(models.Model):
+    nume = models.CharField(max_length=10)
+    prenume = models.CharField(max_length=50, blank=True)
+    varsta = models.CharField(max_length=20)  
+    email = models.EmailField()
+    tip_mesaj = models.CharField(max_length=20, choices=[
+        ('reclamatie', 'Reclamatie'),
+        ('intrebare', 'Intrebare'),
+        ('review', 'Review'),
+        ('cerere', 'Cerere'),
+        ('programare', 'Programare'),
+    ])
+    subiect = models.CharField(max_length=100)
+    zile_asteptare = models.PositiveIntegerField()
+    mesaj = models.TextField()
+    data_trimitere = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Mesaj de la {self.nume} ({self.tip_mesaj})"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    loyalty = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile of {self.user.username}"
+    
