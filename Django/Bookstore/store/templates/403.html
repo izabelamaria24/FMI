@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="error-container">
+    <h1>
+        {% if titlu %}
+            {{ titlu }}
+        {% else %}
+            Eroare 403
+        {% endif %}
+    </h1>
+
+    {% if user.is_authenticated %}
+        <p>Salut {{ user.username }}! Nu ai permisiunea de a accesa această resursă.</p>
+    {% else %}
+        <p>Salut preastimate anonim! Nu ai permisiunea de a accesa această resursă.</p>
+    {% endif %}
+
+    <p>{{ mesaj_personalizat }}</p>
+    </div>
+{% endblock %}

@@ -1,46 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book List</title>
-</head>
-<body>
-    <h1>Filter Books</h1>
+{% extends "base.html" %}
+{% load static %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Apply Filters</button>
-        <button type="reset" onclick="window.location.href='{{ request.path }}'">Reset</button>
-    </form>
+{% block title %}
+Book List
+{% endblock %}
 
-    <h2>Book List</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>ISBN</th>
-                <th>Description</th>
-                <th>Price</th>
-            </tr>
-        </thead>
-        <tbody>
+{% block content %}
+<div class="bookstore-container">
+    <div class="filters-section">
+        <h2>Filter Books</h2>
+        <form method="post" class="filters-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn-apply">Apply Filters</button>
+            <button type="reset" class="btn-reset" onclick="window.location.href='{{ request.path }}'">Reset</button>
+        </form>
+    </div>
+
+    <div class="books-section">
+        <h2>Book List</h2>
+        {% if books %}
+        <div class="book-grid">
             {% for book in books %}
-            <tr>
-                <td>{{ book.id }}</td>
-                <td>{{ book.title }}</td>
-                <td>{{ book.isbn }}</td>
-                <td>{{ book.description }}</td>
-                <td>{{ book.price }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No books found matching the filters.</td>
-            </tr>
+            <div class="book-card">
+                <h3 class="book-title">{{ book.title }}</h3>
+                <p class="book-description">{{ book.description|truncatechars:100 }}</p>
+                <p class="book-isbn"><strong>ISBN:</strong> {{ book.isbn }}</p>
+                <p class="book-price"><strong>Price:</strong> ${{ book.price }}</p>
+                <a href="{% url 'book_detail' book.id %}" class="btn-view-details">View Details</a>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+        </div>
+        {% else %}
+        <p class="no-books">No books found matching the filters.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="offer-banner" style="display: none; background: #ffeb3b; padding: 10px; text-align: center; margin: 20px 0; border-radius: 5px;">
+    <a href="#" onclick="claimOffer()" style="text-decoration: none; color: #000; font-weight: bold;">
+        <h2>Oferta Reducere 50%</h2>
+    </a>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const showBanner = Math.random() < 0.3; 
+    const banner = document.getElementById("offer-banner");
+    if (showBanner) {
+        banner.style.display = "block"; 
+    }
+});
+
+function claimOffer() {
+    fetch("{% url 'claim_offer' %}", { 
+        method: "POST", 
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}' 
+        }, 
+        credentials: "same-origin" 
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = "{% url 'oferta' %}";
+        } else {
+            alert("Failed to claim the offer. Please try again.");
+        }
+    });
+}
+</script>
+
+{% endblock %}

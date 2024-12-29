@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django import forms
 
 class Author(models.Model):
     id = models.AutoField(primary_key=True)
@@ -78,7 +77,36 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     loyalty = models.IntegerField(blank=True, null=True)
+    code = models.CharField(max_length=100, blank=True, null=True) 
+    email_confirmed = models.BooleanField(default=False)  
+    
+    class Meta:
+        permissions = (
+            ("vizualizare_oferta", "Poate vizualiza oferta"),
+        )
 
     def __str__(self):
         return f"Profile of {self.user.username}"
     
+    
+class Vizualizare(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['viewed_at'] 
+        
+
+class Promotie(models.Model):
+    nume = models.CharField(max_length=200)
+    subiect = models.CharField(max_length=200)
+    mesaj = models.TextField()
+    data_creare = models.DateTimeField(auto_now_add=True)
+    data_expirare = models.DateTimeField()
+    categoriile_promo = models.ManyToManyField(Category) 
+    procent_discount = models.FloatField(default=0) 
+    k_vizualizari_minime = models.IntegerField(default=3)  
+
+    def __str__(self):
+        return self.nume

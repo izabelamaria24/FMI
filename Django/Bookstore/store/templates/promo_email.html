@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ promo_name }} - Promotion</title>
+</head>
+<body>
+    <h1>{{ promo_name }}</h1>
+    <p>{{ mesaj }}</p>
+    <p><strong>Valid until:</strong> {{ data_expirare|date:"F j, Y" }}</p>
+    <p><strong>Discount:</strong> {{ discount }}%</p>
+    <p>Don't miss out on this great offer!</p>
+</body>
+</html>

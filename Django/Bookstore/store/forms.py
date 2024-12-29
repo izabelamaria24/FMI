@@ -1,10 +1,27 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Category, Publisher, Author, UserProfile, Book
+from .models import Category, Publisher, Author, Book, Promotie
 import re
 import datetime
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import AuthenticationForm
+import os
+import json
+from django.conf import settings
+from django.db import connection
+from django.core.mail import mail_admins
+
+class CustomAuthenticationForm(AuthenticationForm):
+    ramane_logat = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='Ramaneti logat'
+    )
+
+    def clean(self):        
+        cleaned_data = super().clean()
+        ramane_logat = self.cleaned_data.get('ramane_logat')
+        return cleaned_data
 
 class BookFilterForm(forms.Form):
     id = forms.IntegerField(required=False, label='ID')
@@ -35,7 +52,11 @@ class ContactForm(forms.Form):
             lambda value: value == "" or re.match(r'^[A-Z][a-zA-Z ]*$', value) or forms.ValidationError("Prenumele trebuie să înceapă cu literă mare și să conțină doar litere și spații.")
         ],
     )
-    data_nasterii = forms.DateField(required=True, label="Data nașterii")
+    data_nasterii = forms.DateField(
+        required=True,
+        label="Data nașterii",
+        input_formats=['%Y-%m-%d', '%d-%m-%Y'] 
+    )
     email = forms.EmailField(required=True, label="E-mail")
     confirm_email = forms.EmailField(required=True, label="Confirmare e-mail")
     tip_mesaj = forms.ChoiceField(
@@ -72,21 +93,50 @@ class ContactForm(forms.Form):
             self.add_error('confirm_email', "E-mailurile nu coincid.")
 
         data_nasterii = cleaned_data.get('data_nasterii')
+        varsta = 0
         if data_nasterii:
-            today = datetime.today().date()
+            today = datetime.date.today()
             age = today.year - data_nasterii.year - ((today.month, today.day) < (data_nasterii.month, data_nasterii.day))
+            varsta = age
             if age < 18:
-                self.add_error('data_nasterii', "Trebuie să fiți major.")
+                self.add_error('data_nasterii', "Trebuie să fiti major.")
 
         mesaj = cleaned_data.get('mesaj')
         if mesaj:
             if "http://" in mesaj or "https://" in mesaj:
-                self.add_error('mesaj', "Mesajul nu poate conține linkuri.")
+                self.add_error('mesaj', "Mesajul nu poate contine linkuri.")
             if len(re.findall(r'\b\w+\b', mesaj)) < 5 or len(re.findall(r'\b\w+\b', mesaj)) > 100:
-                self.add_error('mesaj', "Mesajul trebuie să conțină între 5 și 100 de cuvinte.")
+                self.add_error('mesaj', "Mesajul trebuie să contina între 5 si 100 de cuvinte.")
             nume = cleaned_data.get('nume')
             if not mesaj.endswith(nume):
-                self.add_error('mesaj', "Mesajul trebuie să se încheie cu numele dvs.")
+                self.add_error('mesaj', "Mesajul trebuie sa se termine cu numele dvs.")
+                
+        if not self.is_valid():
+            print(self.errors)
+
+        if self.is_valid():
+            folder_path = os.path.join(settings.BASE_DIR, 'mesaje') 
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+
+            timestamp = datetime.datetime.now().time()
+            timestamp = re.sub(r'[^a-zA-Z0-9_-]', '', str(timestamp))
+            file_name = f"mesaj_{timestamp}.json"
+            file_path = os.path.join(folder_path, file_name)
+
+            message_data = {
+                'nume': cleaned_data.get('nume'),
+                'prenume': cleaned_data.get('prenume'),
+                'varsta': varsta,
+                'email': cleaned_data.get('email'),
+                'tip_mesaj': cleaned_data.get('tip_mesaj'),
+                'subiect': cleaned_data.get('subiect'),
+                'zile_asteptare': cleaned_data.get('zile_asteptare'),
+                'mesaj': cleaned_data.get('mesaj'),
+            }
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(message_data, f, ensure_ascii=False, indent=4)
 
         return cleaned_data
     
@@ -107,6 +157,21 @@ class UserRegistrationForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'password', 'first_name', 'last_name']
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        email = self.cleaned_data.get('email')
+
+        if username.lower() == 'admin':
+            subject = "cineva incearca sa ne preia site-ul"
+            message_html = f"""
+            <h1 style="color: red;">{subject}</h1>
+            <p>Email: {email}</p>
+            """
+            message_text = f"Email: {email}"
+            mail_admins(subject, message_text, html_message=message_html)
+            raise ValidationError("Nu poți folosi username-ul 'admin'.")
+        return username
+
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
         if not phone_number.isdigit():
@@ -126,19 +191,6 @@ class UserRegistrationForm(forms.ModelForm):
         if loyalty and loyalty < 0:
             raise ValidationError("Loyalty points cannot be negative.")
         return loyalty
-    
-    
-class CustomAuthenticationForm(AuthenticationForm):
-    ramane_logat = forms.BooleanField(
-        required=False,
-        initial=False,
-        label='Ramaneti logat'
-    )
-
-    def clean(self):        
-        cleaned_data = super().clean()
-        ramane_logat = self.cleaned_data.get('ramane_logat')
-        return cleaned_data
 
 
 class BookForm(forms.ModelForm):
@@ -156,7 +208,19 @@ class BookForm(forms.ModelForm):
         label="Additional Quantity",
         help_text="Introduceți cantitatea suplimentară care va fi adăugată la stoc."
     )
-    
+    final_price = forms.DecimalField(
+        required=False,
+        label="Preț Final",
+        disabled=True,
+        max_digits=8,
+        decimal_places=2
+    )
+    total_quantity = forms.IntegerField(
+        required=False,
+        label="Cantitate Totală",
+        disabled=True 
+    )
+
     class Meta:
         model = Book
         fields = ['title', 'isbn', 'publication_date', 'price', 'authors', 'category', 'publisher', 'description']
@@ -192,7 +256,7 @@ class BookForm(forms.ModelForm):
         if price <= 0:
             raise forms.ValidationError('Prețul trebuie să fie mai mare decât 0.')
         return price
-    
+
     def clean_additional_discount(self):
         discount = self.cleaned_data.get('additional_discount')
         if discount is not None and discount < 0:
@@ -232,13 +296,33 @@ class BookForm(forms.ModelForm):
         final_price = price * (1 - additional_discount / 100)
 
         additional_quantity = self.cleaned_data.get('additional_quantity', 0)
-
-        total_quantity = book.quantity_in_stock + additional_quantity
+        total_quantity = additional_quantity
 
         book.price = final_price
-        book.quantity_in_stock = total_quantity
-
+        book.save()
+        
         if commit:
-            book.save()
+            from .models import Inventory
+            inventory, created = Inventory.objects.get_or_create(book=book)
+            inventory.stock_qty = total_quantity
+            inventory.save()
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT setval(pg_get_serial_sequence('store_book', 'id'), 
+                (SELECT MAX(id) FROM store_book) + 1);
+            """)
 
         return book
+    
+    
+class PromotieForm(forms.ModelForm):
+    categoriile_promo = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        widget=forms.CheckboxSelectMultiple, 
+        required=True
+    )
+
+    class Meta:
+        model = Promotie
+        fields = ['nume', 'subiect', 'mesaj', 'data_expirare', 'categoriile_promo', 'procent_discount', 'k_vizualizari_minime']

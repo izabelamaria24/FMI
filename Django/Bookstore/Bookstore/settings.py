@@ -53,6 +53,18 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'Bookstore.urls'
 
+ADMINS = [
+    ('Admin1', 'izabelajilavu@gmail.com'),
+    ('Admin2', 'izabelajilavu@gmail.com'),
+]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'izabelajilavu@gmail.com'
+EMAIL_HOST_PASSWORD = 'weud icoc ygxt maco'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -129,3 +141,64 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING_DIR = os.path.join(BASE_DIR, 'logs')  # Define the logs directory
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'debug_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+        'info_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'info.log'),
+            'formatter': 'verbose',
+        },
+        'warning_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'warning.log'),
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'error.log'),
+            'formatter': 'verbose',
+        },
+        'critical_file': {
+            'level': 'CRITICAL',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'critical.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'debug_file', 'info_file', 'warning_file', 'error_file', 'critical_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
