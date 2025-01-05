@@ -5,17 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}My Bookstore{% endblock %}</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" type = "text/css" href="{% static 'styles.css' %}">
 </head>
 <body>
     <header>
         <h1>My Bookstore</h1>
         <nav>
-            <a href="#">About</a>
-            <a href="#">Contact</a>
+            <a href="{% url 'contact' %}">Contact</a>
+            <a href="{% url 'cart_detail' %}">Cart</a>
+            <a href="{% url 'book_list' %}">Our books</a>
+            <a href="{% url 'profile' %}">Profile</a>
         </nav>
     </header>
-    <main>
+    <main class="content-container">
         {% block content %}
         {% endblock %}
     </main>
@@ -24,3 +26,92 @@
     </footer>
 </body>
 </html>
+
+<style>
+    /* Reset margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Global styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4; /* Light background */
+    color: #333; /* Dark text for readability */
+}
+
+/* Header styles */
+header {
+    background-color: #6c63ff; /* Primary color */
+    color: white;
+    padding: 20px 40px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+header nav {
+    margin-top: 10px;
+}
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 1.1em;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+header nav a:hover {
+    background-color: #5748d4; /* Darker shade of primary color */
+}
+
+/* Main content container */
+.content-container {
+    padding: 40px;
+    background-color: #fff; /* White background for the content */
+    min-height: 60vh; /* Ensures the content area is tall enough */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    border-radius: 10px;
+    max-width: 1200px;
+}
+
+/* Footer styles */
+footer {
+    background-color: #6c63ff; /* Primary color */
+    color: white;
+    text-align: center;
+    padding: 20px;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2em;
+    }
+
+    header nav a {
+        font-size: 1em;
+        margin: 0 10px;
+    }
+
+    .content-container {
+        padding: 20px;
+    }
+}
+
+</style>

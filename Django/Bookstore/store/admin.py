@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Author, Category, Publisher, Book, Inventory
+from .models import Author, Category, Publisher, Book, Inventory, Order, OrderItem
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime, timedelta
+from .models import UserProfile
 
 admin.site.site_header = "My Bookstore Admin"
 admin.site.site_title = "Bookstore Admin Portal"
@@ -117,7 +118,7 @@ class AuthorFilter(admin.SimpleListFilter):
 class BookAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Basic Information', {
-            'fields': ('title', 'authors', 'category', 'description')
+            'fields': ('title', 'authors', 'category', 'description', 'image')
         }),
         ('Publishing Details', {
             'fields': ('publisher', 'publication_date', 'price', 'isbn'),
@@ -140,3 +141,39 @@ class BookAdmin(admin.ModelAdmin):
 class InventoryAdmin(admin.ModelAdmin):
     search_fields = ['book']
 
+
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone_number', 'date_of_birth', 'address', 'loyalty', 'email_confirmed', 'blocked')
+    list_filter = ('blocked',)
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'user__email')
+    actions = ['block_user', 'unblock_user']
+
+    def block_user(self, request, queryset):
+        queryset.update(blocked=True)
+        self.message_user(request, "Selected users have been blocked.")
+    
+    def unblock_user(self, request, queryset):
+        queryset.update(blocked=False)
+        self.message_user(request, "Selected users have been unblocked.")
+
+admin.site.register(UserProfile, UserProfileAdmin)
+
+
+# Inline model for OrderItem
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 1  # Number of empty forms to display by default
+
+# Custom admin for Order model
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'created_at', 'total_price')  # Fields to display in the list view
+    search_fields = ('user__username',)  # Allow search by username of the user
+    list_filter = ('created_at',)  # Filter by creation date
+    inlines = [OrderItemInline]  # Show OrderItem inline within the Order admin page
+
+# Register OrderItem model separately
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'inventory', 'quantity', 'price')  # Fields to display in the list view
+    search_fields = ('order__id', 'inventory__book__title')  # Allow search by order id and book title

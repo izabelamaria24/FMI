@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
-from .models import Book, UserProfile, Vizualizare, User, Promotie, Publisher, Category, Author
+from .models import Book, UserProfile, Vizualizare, User, Promotie, Publisher, Category, Author, Cart, CartItem, Inventory, Order, OrderItem
 from .forms import BookFilterForm, ContactForm, CustomAuthenticationForm, BookForm, UserRegistrationForm, PromotieForm
 import time
 import json
@@ -15,8 +15,12 @@ from django.core.mail import EmailMultiAlternatives, EmailMessage, mail_admins
 import uuid
 from django.utils.timezone import now
 from django.contrib.auth.models import Permission
-
+import os
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 import logging
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
 
 logger = logging.getLogger('django')
 
@@ -33,11 +37,11 @@ def get_client_ip(request):
 
 def book_list(request):
     logger.debug('Entering book_list view')
+
+    # Initialize form and book queryset
     if request.method == 'POST':
-        form = BookFilterForm(request.POST)  
-        
+        form = BookFilterForm(request.POST)
         logger.debug('Form data received: %s', request.POST)
-        
         books = Book.objects.all()
 
         if form.is_valid():
@@ -63,7 +67,20 @@ def book_list(request):
         books = Book.objects.all()
         logger.debug('Form is not POST, displaying all books')
 
-    return render(request, 'book_list.html', {'form': form, 'books': books})
+    books_in_cart = set()
+    if request.user.is_authenticated:
+        logger.debug('User is authenticated, fetching cart items')
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            books_in_cart = set(cart.items.values_list('inventory__book_id', flat=True))
+            logger.debug('Books in cart: %s', books_in_cart)
+
+    logger.debug('Rendering book_list template')
+    return render(request, 'book_list.html', {
+        'form': form,
+        'books': books,
+        'books_in_cart': books_in_cart
+    })
 
 
 def contact_view(request):
@@ -122,26 +139,35 @@ def login_view(request):
         username = request.POST.get('username')
         ip = get_client_ip(request)
 
-        if not username in failed_logins:
+        if username not in failed_logins:
             failed_logins[username] = []
 
         if form.is_valid():
             user = form.get_user()
+
+            if hasattr(user, 'profile') and user.profile.blocked:
+                messages.error(request, "Your account is blocked. Please contact an administrator.")
+                logger.warning(f"Blocked user {username} attempted to log in from IP {ip}")
+                return redirect('login') 
+
             login(request, user)
             logger.info('User %s logged in successfully from IP %s', username, ip)
+
             failed_logins[username] = [] 
-            return redirect('/store/profile')
+            return redirect('/store/profile')  
+
         else:
             failed_logins[username].append((ip, now()))
             messages.error(request, "Invalid username or password.")
             logger.warning('Failed login attempt for user %s from IP %s', username, ip)
+
             failed_attempts = [
                 attempt for attempt in failed_logins[username]
                 if now() - attempt[1] <= timedelta(minutes=2)
             ]
 
             if len(failed_attempts) >= 3:
-                subject = "Logări suspecte"
+                subject = "Suspicious Login Attempts"
                 message_text = f"Username: {username}\nIP: {ip}"
                 message_html = f"""
                 <h1 style="color: red;">{subject}</h1>
@@ -149,7 +175,7 @@ def login_view(request):
                 <p>IP: {ip}</p>
                 """
                 mail_admins(subject, message_text, html_message=message_html)
-                failed_logins[username] = [] 
+                failed_logins[username] = []  
 
     else:
         form = CustomAuthenticationForm()
@@ -395,3 +421,159 @@ def publisher_detail(request, id):
 def promotie_detail(request, id):
     promotie = Promotie.objects.get(id=id)
     return render(request, 'promotie_detail.html', {'promotie': promotie})
+
+
+@login_required
+def add_to_cart(request, book_id):
+    if request.method == "POST":
+        inventory = get_object_or_404(Inventory, book__id=book_id)
+        cart, created = Cart.objects.get_or_create(user=request.user)
+
+        quantity = int(request.POST.get('quantity', 1))  
+
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, inventory=inventory)
+        if created:
+            if quantity <= inventory.stock_qty:
+                cart_item.quantity = quantity
+            else:
+                messages.error(request, "Cannot add more items than available in stock.")
+                return redirect('book_detail', book_id=book_id)
+        else:
+            if cart_item.quantity + quantity <= inventory.stock_qty:
+                cart_item.quantity += quantity
+            else:
+                messages.error(request, "Cannot add more items than available in stock.")
+                return redirect('book_detail', book_id=book_id)
+
+        cart_item.save()
+        messages.success(request, f"{inventory.book.title} added to your cart.")
+        return redirect('book_list')
+
+
+@login_required
+def update_cart(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    quantity = int(request.POST.get('quantity', 0))
+    if 0 <= quantity <= cart_item.inventory.stock_qty:
+        cart_item.quantity = quantity
+        cart_item.save()
+    return redirect('cart_detail')
+
+
+@login_required
+def remove_from_cart(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    cart_item.delete()
+    return redirect('cart_detail')
+
+
+@login_required
+def cart_detail(request):
+    cart = Cart.objects.prefetch_related('items__inventory__book').get(user=request.user)
+
+    sort_by = request.GET.get('sort_by', '')
+    items = cart.items.all()
+
+    # Sorting items based on the selected option
+    if sort_by == 'name_asc':
+        items = items.order_by('inventory__book__title')
+    elif sort_by == 'name_desc':
+        items = items.order_by('-inventory__book__title')
+    elif sort_by == 'price_asc':
+        items = items.order_by('inventory__book__price')
+    elif sort_by == 'price_desc':
+        items = items.order_by('-inventory__book__price')
+
+    # Calculate total price per item and the total for the cart
+    for item in items:
+        item.total_price = item.quantity * item.inventory.book.price  # Total price per item
+
+    total = sum(item.total_price for item in items)  # Total price for the cart
+
+    return render(request, 'cart_detail.html', {'cart': cart, 'sorted_items': items, 'total': total})
+
+
+@login_required
+def place_order(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    if not cart.items.exists():
+        messages.error(request, "Your cart is empty.")
+        return redirect('cart_detail')
+
+    total_price = sum(item.quantity * item.inventory.book.price for item in cart.items.all())
+    order = Order.objects.create(user=request.user, total_price=total_price)
+
+    for cart_item in cart.items.all():
+        OrderItem.objects.create(
+            order=order,
+            inventory=cart_item.inventory,
+            quantity=cart_item.quantity,
+            price=cart_item.inventory.book.price
+        )
+        cart_item.inventory.stock_qty -= cart_item.quantity
+        cart_item.inventory.save()
+
+    cart.items.all().delete()
+
+    pdf_path = generate_invoice(order)
+
+    send_invoice_email(order, pdf_path)
+
+    messages.success(request, "Order placed successfully! An invoice has been sent to your email.")
+    return redirect('cart_detail')
+
+def generate_invoice(order):
+    user_folder = f"temporar-facturi/{order.user.username}/"
+    os.makedirs(user_folder, exist_ok=True)
+    pdf_path = os.path.join(user_folder, f"factura-{int(time.time())}.pdf")
+
+    with open(pdf_path, "wb") as pdf_file:
+        c = canvas.Canvas(pdf_file, pagesize=letter)
+
+        c.drawString(100, 800, f"Invoice for Order {order.id}")
+        c.drawString(100, 780, f"Date: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        c.drawString(100, 760, f"Customer: {order.user.username} ({order.user.email})")
+
+        y = 720
+        cnt = 0
+        for item in order.items.all():
+            book_title = item.inventory.book.title
+            book_link = item.inventory.book.get_absolute_url()
+            cnt += item.quantity
+
+            c.drawString(100, y, f"{book_title} (x{item.quantity}) - ${item.price}")
+
+            c.linkURL(book_link, (100, y-5, 400, y+10), relative=1)
+
+            y -= 20
+
+        y -= 20
+        c.drawString(100, y, f"Total: ${order.total_price}")
+        c.drawString(100, y - 20, f"Total items: {cnt}")
+        c.drawString(100, y - 40, f"Customer support: izabelajilavu@gmail.com")
+        c.save()
+
+    return pdf_path
+
+
+def send_invoice_email(order, pdf_path):
+    subject = f"Invoice for Order {order.id}"
+    message = render_to_string('email/invoice_email.html', {'order': order}) 
+    email = EmailMessage(
+        subject,
+        message,  
+        'admin@yourwebsite.com',
+        [order.user.email],
+    )
+    email.content_subtype = "html" 
+    email.attach_file(pdf_path)
+    email.send()
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'password_change.html'
+    success_url = reverse_lazy('password_change_done')
+
+    def form_valid(self, form):
+        print("Password changed successfully!")
+        return super().form_valid(form)

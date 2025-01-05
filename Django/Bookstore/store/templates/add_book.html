@@ -4,15 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adăugați o carte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .add-book-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-book-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #6c63ff;
+        }
+
+        .add-book-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:hover,
+        .form-group textarea:hover,
+        .form-group select:hover {
+            border-color: #bbb;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #6c63ff;
+            box-shadow: 0 0 8px rgba(108, 99, 255, 0.5);
+            outline: none;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-save {
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #6c63ff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-save:hover {
+            background-color: #574ddb;
+            box-shadow: 0 4px 8px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-save:active {
+            background-color: #453ab7;
+        }
+    </style>
 </head>
 <body>
-    <h1>Adăugați o carte</h1>
-
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Salvează</button>
-    </form>
-
+    <div class="add-book-container">
+        <h1 class="add-book-title">Adăugați o carte</h1>
+        <form method="post" class="add-book-form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn-save">Salvează</button>
+        </form>
+    </div>
 </body>
 </html>

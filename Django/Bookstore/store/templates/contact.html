@@ -1,16 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact</title>
-</head>
-<body>
-    <h1>Formular de contact</h1>
-    <form method="post" action=".">
+{% extends "base.html" %}
+
+{% block title %}
+Contact
+{% endblock %}
+
+{% block content %}
+<div class="contact-container">
+    <h1 class="contact-title">Formular de Contact</h1>
+    <form method="post" action="." class="contact-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Trimite</button>
+        <div class="form-group">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn-submit">Trimite</button>
     </form>
-</body>
-</html>
+</div>
+
+<style>
+    .contact-container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 30px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid #6c63ff;
+    }
+
+    .contact-title {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #6c63ff;
+    }
+
+    .contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+        color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        background-color: #fff;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .form-group input:hover,
+    .form-group textarea:hover,
+    .form-group select:hover {
+        border-color: #bbb;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        border-color: #6c63ff;
+        box-shadow: 0 0 8px rgba(108, 99, 255, 0.5);
+        outline: none;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn-submit {
+        padding: 12px 20px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+        background-color: #6c63ff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .btn-submit:hover {
+        background-color: #574ddb;
+        box-shadow: 0 4px 8px rgba(108, 99, 255, 0.4);
+    }
+
+    .btn-submit:active {
+        background-color: #453ab7;
+    }
+</style>
+{% endblock %}

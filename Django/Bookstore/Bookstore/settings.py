@@ -90,14 +90,14 @@ WSGI_APPLICATION = 'Bookstore.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-                'options': '-c search_path=bookstore'
-        },
-        'NAME': 'store_db',   # numele bazei de date
-        'USER': 'postgres',      # username pt conexiunea la baza de date
+        'NAME': 'store_db',   
+        'USER': 'postgres',    
         'PASSWORD': 'izabela24',
-        'HOST': 'localhost',  # sau IP-ul serverului
-        'PORT': '5432',       # portul implicit pentru PostgreSQL
+        'HOST': 'localhost', 
+        'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=bookstore' if not os.environ.get('DJANGO_SETTINGS_MODULE') else ''
+        },
     }
 }
 
@@ -135,14 +135,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGGING_DIR = os.path.join(BASE_DIR, 'logs')  # Define the logs directory
+LOGGING_DIR = os.path.join(BASE_DIR, 'logs') 
+MEDIA_URL = '/media/' 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  
 
 LOGGING = {
     'version': 1,

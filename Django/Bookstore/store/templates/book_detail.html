@@ -5,18 +5,171 @@
 {% endblock %}
 
 {% block content %}
-<div class="book-detail">
-    <h1>{{ book.title }}</h1>
-    
-    <div class="book-info">
-        <p><strong>Author:</strong> {{ book.author }}</p>
-        <p><strong>ISBN:</strong> {{ book.isbn }}</p>
-        <p><strong>Category:</strong> {{ book.category }}</p>
-        <p><strong>Publisher:</strong> {{ book.publisher }}</p>
-        <p><strong>Publication Date:</strong> {{ book.publication_date|date:"F j, Y" }}</p>
-        <p><strong>Price:</strong> ${{ book.price }}</p>
-        <p><strong>Description:</strong></p>
-        <p>{{ book.description }}</p>
+<div class="book-detail-container">
+    <div class="book-detail">
+        <!-- Book Image -->
+        <div class="book-image-container">
+            {% if book.image %}
+                <img src="{{ book.image.url }}" alt="{{ book.title }}" class="book-image">
+            {% endif %}
+        </div>
+
+        <!-- Book Information -->
+        <div class="book-info">
+            <h1>{{ book.title }}</h1>
+            <p><strong>Author:</strong> 
+                {% for author in book.authors.all %}
+                    {{ author.first_name }} {{ author.last_name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+            <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+            <p><strong>Category:</strong> {{ book.category }}</p>
+            <p><strong>Publisher:</strong> {{ book.publisher }}</p>
+            <p><strong>Publication Date:</strong> {{ book.publication_date|date:"F j, Y" }}</p>
+            <p><strong>Price:</strong> ${{ book.price }}</p>
+            <p><strong>Description:</strong></p>
+            <p>{{ book.description }}</p>
+        </div>
+
+        <!-- Book Stock and Add to Cart Form -->
+        <div class="book-stock">
+            {% if book.inventory.stock_qty > 0 %}
+                <p><strong>Stock:</strong> {{ book.inventory.stock_qty }}</p>
+                {% if user.is_authenticated %}
+                <form action="{% url 'add_to_cart' book.id %}" method="post" class="quantity-form">
+                    {% csrf_token %}
+                    <div class="quantity-selector">
+                        <button type="button" class="btn-decrement" onclick="changeQuantity(-1)">-</button>
+                        <input 
+                            type="number" 
+                            name="quantity" 
+                            id="quantity-input" 
+                            min="1" 
+                            max="{{ book.inventory.stock_qty }}" 
+                            value="1">
+                        <button type="button" class="btn-increment" onclick="changeQuantity(1)">+</button>
+                    </div>
+                    <button type="submit" class="btn-add-to-cart">Add to Cart</button>
+                </form>
+                {% endif %}
+            {% else %}
+                <p><strong>Out of Stock</strong></p>
+                <p><strong>Restock Date:</strong> {{ book.inventory.restock_date|date:"F j, Y" }}</p>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<script>
+    function changeQuantity(delta) {
+        const input = document.getElementById("quantity-input");
+        let currentValue = parseInt(input.value, 10);
+        const maxValue = parseInt(input.max, 10);
+        const minValue = parseInt(input.min, 10);
+    
+        currentValue += delta;
+        if (currentValue >= minValue && currentValue <= maxValue) {
+            input.value = currentValue;
+        }
+    }
+</script>
+
+<style>
+    .book-detail-container {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .book-detail {
+        display: flex;
+        gap: 20px;
+        max-width: 1200px;
+        width: 100%;
+    }
+
+    .book-image-container {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .book-image {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    .book-info {
+        flex: 2;
+        max-width: 700px;
+    }
+
+    .book-info h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .book-info p {
+        font-size: 16px;
+        margin: 5px 0;
+    }
+
+    .book-stock {
+        margin-top: 20px;
+    }
+
+    .quantity-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quantity-selector button {
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        font-size: 20px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        cursor: pointer;
+    }
+
+    .quantity-selector input {
+        width: 60px;
+        text-align: center;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        padding: 5px;
+    }
+
+    .btn-add-to-cart {
+        background-color: #6c63ff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+
+    .btn-add-to-cart:hover {
+        background-color: #5a52d3;
+    }
+
+    .btn-decrement, .btn-increment {
+        background-color: #f4f4f4;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        font-size: 18px;
+        width: 35px;
+        height: 35px;
+    }
+
+    .btn-decrement:hover, .btn-increment:hover {
+        background-color: #eaeaea;
+    }
+</style>
+
 {% endblock %}

@@ -4,13 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
 </head>
 <body>
-    <h1>Register</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
+    <section class="register-container">
+        <section class="register-content-container">
+            <h1 class="register-title">Register</h1>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Register</button>
+            </form>
+        </section>
+        <section class="register-image-container">
+            <img src="{% static 'login.svg' %}"/>
+        </section>
+    </section>
 </body>
 </html>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .register-container {
+        display: flex;
+        height: 100vh; 
+    }
+
+    .register-title {
+        font-size: 2rem;
+    }
+
+    .register-content-container {
+        width: 50%; /* 50% width */
+        padding: 50px; /* Add some padding for aesthetics */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start; /* Align content at the top */
+        align-items: center; /* Center content horizontally */
+        background-color: #f4f4f4;
+        overflow-y: auto; 
+    }
+
+    .login-title {
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+
+    form {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    form input,
+    form button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    form button {
+        background-color: #4CAF50; 
+        color: white;
+        cursor: pointer;
+    }
+
+    form button:hover {
+        background-color: #45a049; 
+    }
+
+    .register-image-container {
+        width: 50%;
+        display: flex;
+        justify-content: center; 
+        align-items: center; 
+        background-color: white; 
+    }
+
+    .register-image-container img {
+        max-width: 80%;
+        height: auto; 
+    }
+</style>
+

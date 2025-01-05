@@ -1,29 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-</head>
-<body>
-    <h1>User Profile</h1>
+{% extends 'base.html' %}
 
-    <div>
-        <h2>Welcome, {{ user.username }}!</h2>
+{% block content %}
+    <section class="user-profile-container">
+        <h1 class="user-profile-title">User Profile</h1>
+        <div class="user-greeting">
+            <h2>Welcome, {{ user.username }}!</h2>
+        </div>
 
-        <div>
+        <section class="user-info">
             <h3>Your Information:</h3>
             <p><strong>Username:</strong> {{ user.username }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>First Name:</strong> {{ user.first_name }}</p>
-            <p><strong>Last Name:</strong> {{ user.last_name }}</p>
-        </div>
+        </section>
 
-        <div>
+        <section class="user-actions">
             <h3>Actions:</h3>
-            <p><a href="{% url 'password_change' %}">Change Password</a></p>
-            <p><a href="{% url 'logout' %}">Logout</a></p>
-        </div>
-    </div>
-</body>
-</html>
+            <p><a href="{% url 'password_change' %}" class="action-link">Change Password</a></p>
+            <p><a href="{% url 'logout' %}" class="action-link">Logout</a></p>
+        </section>
+    </section>
+
+    <style>
+        /* User Profile Container */
+.user-profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+/* User Profile Title */
+.user-profile-title {
+    text-align: center;
+    font-size: 2.5em;
+    color: #6c63ff; /* Primary color */
+    margin-bottom: 20px;
+}
+
+/* User Greeting */
+.user-greeting h2 {
+    color: #6c63ff; /* Primary color */
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* User Info Section */
+.user-info {
+    margin-bottom: 30px;
+}
+
+.user-info h3 {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.user-info p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.user-info strong {
+    font-weight: bold;
+    color: #6c63ff; /* Primary color */
+}
+
+/* User Actions Section */
+.user-actions {
+    margin-bottom: 30px;
+}
+
+.user-actions h3 {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.user-actions p {
+    font-size: 1.1em;
+}
+
+.action-link {
+    color: #6c63ff; /* Primary color */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.action-link:hover {
+    color: #5748d4; /* Darker shade of primary color */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .user-profile-container {
+        padding: 20px;
+    }
+
+    .user-profile-title {
+        font-size: 2em;
+    }
+
+    .user-greeting h2 {
+        font-size: 1.5em;
+    }
+
+    .user-info h3,
+    .user-actions h3 {
+        font-size: 1.3em;
+    }
+
+    .user-info p,
+    .user-actions p {
+        font-size: 1em;
+    }
+
+    .action-link {
+        font-size: 1em;
+    }
+}
+    </style>
+{% endblock %}

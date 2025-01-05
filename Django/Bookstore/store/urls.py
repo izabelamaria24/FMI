@@ -25,4 +25,9 @@ urlpatterns = [
     path('category/<int:id>/', views.category_detail, name='category_detail'),
     path('publisher/<int:id>/', views.publisher_detail, name='publisher_detail'),
     path('promotie/<int:id>/', views.promotie_detail, name='promotie_detail'),
+    path('cart/', views.cart_detail, name='cart_detail'),
+    path('cart/add/<int:book_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/update/<int:item_id>/', views.update_cart, name='update_cart'),
+    path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('place_order/', views.place_order, name='place_order')
 ]

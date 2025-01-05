@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Your Cart</h2>
+{% if cart.items.all %}
+    <div class="cart-container">
+        <!-- Sorting Options -->
+        <form method="get" class="sort-form">
+            <label for="sort-by" class="sort-label">Sort By:</label>
+            <select name="sort_by" id="sort-by" class="sort-dropdown" onchange="this.form.submit()">
+                <option value="">Default</option>
+                <option value="name_asc" {% if request.GET.sort_by == "name_asc" %}selected{% endif %}>Name (A-Z)</option>
+                <option value="name_desc" {% if request.GET.sort_by == "name_desc" %}selected{% endif %}>Name (Z-A)</option>
+                <option value="price_asc" {% if request.GET.sort_by == "price_asc" %}selected{% endif %}>Price (Low to High)</option>
+                <option value="price_desc" {% if request.GET.sort_by == "price_desc" %}selected{% endif %}>Price (High to Low)</option>
+            </select>
+        </form>
+
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sorted_items %}
+                <tr class="cart-item">
+                    <td class="book-title">{{ item.inventory.book.title }}</td>
+                    <td class="quantity">
+                        <form action="{% url 'update_cart' item.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.inventory.stock_qty }}">
+                            <button type="submit" class="update-btn">Update</button>
+                        </form>
+                    </td>
+                    <td class="price">${{ item.inventory.book.price }}</td>
+                    <td class="total">${{ item.total_price|floatformat:2 }}</td> 
+                    <td class="actions">
+                        <form action="{% url 'remove_from_cart' item.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="remove-btn">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="cart-summary">
+            <p class="cart-total">Total: ${{ total|floatformat:2 }}</p>
+            <button class="checkout-btn" onclick="window.location.href='{% url 'place_order' %}'">Buy</button>
+        </div>
+    </div>
+{% else %}
+    <p>Your cart is empty.</p>
+{% endif %}
+
+<style>
+    /* General Cart Styles */
+.cart-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sort-form {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.sort-label {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.sort-dropdown {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.cart-table th,
+.cart-table td {
+    padding: 12px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.cart-table th {
+    background-color: #6c63ff;
+    font-weight: bold;
+}
+
+.cart-item {
+    border-bottom: 1px solid #ddd;
+}
+
+.book-title {
+    font-weight: bold;
+}
+
+.quantity input {
+    width: 60px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #ccc;
+}
+
+.update-btn,
+.remove-btn {
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.update-btn:hover,
+.remove-btn:hover {
+    background-color: #5a52d3;
+}
+
+.cart-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+.cart-total {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.checkout-btn {
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.checkout-btn:hover {
+    background-color: #5a52d3;
+}
+
+</style>
+{% endblock %}
