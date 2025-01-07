@@ -159,21 +159,19 @@ class UserProfileAdmin(admin.ModelAdmin):
 admin.site.register(UserProfile, UserProfileAdmin)
 
 
-# Inline model for OrderItem
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    extra = 1  # Number of empty forms to display by default
+    extra = 1 
 
-# Custom admin for Order model
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'created_at', 'total_price')  # Fields to display in the list view
-    search_fields = ('user__username',)  # Allow search by username of the user
-    list_filter = ('created_at',)  # Filter by creation date
-    inlines = [OrderItemInline]  # Show OrderItem inline within the Order admin page
+    list_display = ('id', 'user', 'created_at', 'total_price') 
+    search_fields = ('user__username',)
+    list_filter = ('created_at',) 
+    inlines = [OrderItemInline]  
 
-# Register OrderItem model separately
+
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'inventory', 'quantity', 'price')  # Fields to display in the list view
-    search_fields = ('order__id', 'inventory__book__title')  # Allow search by order id and book title
+    list_display = ('order', 'inventory', 'quantity', 'price') 
+    search_fields = ('order__id', 'inventory__book__title')  

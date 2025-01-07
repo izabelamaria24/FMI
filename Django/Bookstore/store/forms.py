@@ -196,8 +196,6 @@ class UserRegistrationForm(forms.ModelForm):
 
 TAX_RATE = 0.1  # 10%
 class BookForm(forms.ModelForm):
-    # Additional fields
-    
     additional_discount = forms.DecimalField(
         required=False,
         initial=0.0,
@@ -290,30 +288,23 @@ class BookForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=False):
-        # Partially save the Book instance
         book = super().save(commit=False)
 
-        # Extract additional fields from cleaned_data
         price = Decimal(book.price)
         discount = Decimal(self.cleaned_data.get('additional_discount', 0))
-        initial_stock = self.cleaned_data.get('initial_stock', 0) or 0  # Ensure non-null value
+        initial_stock = self.cleaned_data.get('initial_stock', 0) or 0
 
-        # Calculate total price and projected tax
         total_price = price * (Decimal(1) - discount / Decimal(100))
         projected_tax = total_price * Decimal(initial_stock) * Decimal(TAX_RATE)
 
-        # Assign total_price to book if applicable
         if hasattr(book, 'total_price'):
             book.total_price = total_price
 
-        # Save book instance
         book.save()
 
-        # Debugging logs
         print(f"Debug - Book saved: {book}")
         print(f"Debug - initial_stock: {initial_stock}, total_price: {total_price}, projected_tax: {projected_tax}")
 
-        # Create or update the associated inventory
         inventory, created = Inventory.objects.get_or_create(
             book=book,
             defaults={
@@ -322,13 +313,12 @@ class BookForm(forms.ModelForm):
                 'restock_date': timezone.now().date(),
             }
         )
-        if not created:  # If the inventory already exists, update its fields
+        if not created:  
             inventory.stock_qty = initial_stock
             inventory.projected_tax = projected_tax
             inventory.restock_date = timezone.now().date()
             inventory.save()
 
-        # Debugging final state
         print(f"Debug - Inventory saved: {inventory}")
 
         return book

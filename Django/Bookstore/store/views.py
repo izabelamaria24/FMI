@@ -38,7 +38,6 @@ def get_client_ip(request):
 def book_list(request):
     logger.debug('Entering book_list view')
 
-    # Initialize form and book queryset
     if request.method == 'POST':
         form = BookFilterForm(request.POST)
         logger.debug('Form data received: %s', request.POST)
@@ -201,7 +200,6 @@ def claim_offer(request):
     return HttpResponseForbidden()
 
 def oferta_view(request):
-    # Debug: print the user's permissions to check if the permission is applied
     print(f"User permissions: {request.user.get_all_permissions()}")
     
     if not request.user.has_perm("auth.vizualizeaza_oferta"):
@@ -326,10 +324,8 @@ def book_detail(request, id):
         n = 5
         user_views = Vizualizare.objects.filter(user=request.user).order_by('-viewed_at')
         if user_views.count() > n:
-            # Fetch IDs of the excess views
             excess_view_ids = user_views[n:].values_list('id', flat=True)
             
-            # Delete records with these IDs
             Vizualizare.objects.filter(id__in=excess_view_ids).delete()
 
     return render(request, 'book_detail.html', {'book': book})
@@ -474,7 +470,6 @@ def cart_detail(request):
     sort_by = request.GET.get('sort_by', '')
     items = cart.items.all()
 
-    # Sorting items based on the selected option
     if sort_by == 'name_asc':
         items = items.order_by('inventory__book__title')
     elif sort_by == 'name_desc':
@@ -484,18 +479,17 @@ def cart_detail(request):
     elif sort_by == 'price_desc':
         items = items.order_by('-inventory__book__price')
 
-    # Calculate total price per item and the total for the cart
     for item in items:
-        item.total_price = item.quantity * item.inventory.book.price  # Total price per item
+        item.total_price = item.quantity * item.inventory.book.price 
 
-    total = sum(item.total_price for item in items)  # Total price for the cart
+    total = sum(item.total_price for item in items) 
 
     return render(request, 'cart_detail.html', {'cart': cart, 'sorted_items': items, 'total': total})
 
 
 @login_required
 def place_order(request):
-    cart = get_object_or_404(Cart, user=request.user)
+    cart = get_object_or_404(Cart, user=request.user) 
     if not cart.items.exists():
         messages.error(request, "Your cart is empty.")
         return redirect('cart_detail')

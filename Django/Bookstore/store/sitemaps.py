@@ -39,8 +39,5 @@ class PromotieSitemap(Sitemap):
 
 
 class StaticViewSitemap(Sitemap):
-    # def items(self):
-    #     return ['home']  
-
     def location(self, item):
         return reverse(item)
