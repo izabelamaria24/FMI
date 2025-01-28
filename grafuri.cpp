@@ -12,11 +12,6 @@
 
 using namespace std;
 
-// -------------------------------------------------------
-// ALL YOUR FUNCTION DEFINITIONS (as in your code snippet)
-// -------------------------------------------------------
-
-// BFS
 vector<int> BFS(const vector<vector<int>> &adj, int N, int start) {
     vector<int> dist(N, -1);
     queue<int> q;
@@ -35,7 +30,6 @@ vector<int> BFS(const vector<vector<int>> &adj, int N, int start) {
     return dist;
 }
 
-// DFS
 void DFSUtil(const vector<vector<int>> &adj, int u, vector<bool> &visited, vector<int> &order) {
     visited[u] = true;
     order.push_back(u);
@@ -53,7 +47,6 @@ vector<int> DFS(const vector<vector<int>> &adj, int N, int start) {
     return order;
 }
 
-// Kruskal
 struct Edge {
     int u, v, weight;
     bool operator<(const Edge &other) const {
@@ -104,7 +97,6 @@ pair<int, vector<Edge>> Kruskal(const vector<Edge> &edges, int N) {
     return {mstWeight, mst};
 }
 
-// Bellman-Ford
 pair<bool, vector<int>> BellmanFord(const vector<Edge> &edges, int N, int start) {
     vector<int> dist(N, INT_MAX);
     dist[start] = 0;
@@ -117,7 +109,6 @@ pair<bool, vector<int>> BellmanFord(const vector<Edge> &edges, int N, int start)
         }
     }
 
-    // check for negative cycle
     for (const Edge &edge : edges) {
         if (dist[edge.u] != INT_MAX && dist[edge.u] + edge.weight < dist[edge.v]) {
             return {false, {}}; // negative cycle
@@ -126,7 +117,6 @@ pair<bool, vector<int>> BellmanFord(const vector<Edge> &edges, int N, int start)
     return {true, dist};
 }
 
-// Dijkstra
 vector<int> Dijkstra(const vector<vector<pair<int,int>>> &adj, int N, int start) {
     vector<int> dist(N, INT_MAX);
     dist[start] = 0;
@@ -170,7 +160,6 @@ int NumberOfConnectedComponents(const vector<vector<int>> &adj, int N) {
     return count;
 }
 
-// Topological Sort
 void TopologicalSortUtil(const vector<vector<int>> &adj, int u, vector<bool> &visited, stack<int> &Stack) {
     visited[u] = true;
     for (int v : adj[u]) {
@@ -199,7 +188,6 @@ vector<int> TopologicalSort(const vector<vector<int>> &adj, int N) {
     return order;
 }
 
-// Floyd-Warshall
 pair<bool, vector<vector<int>>> FloydWarshall(const vector<vector<int>> &adj, int N) {
     vector<vector<int>> dist(N, vector<int>(N, INT_MAX));
     for (int i = 0; i < N; ++i) dist[i][i] = 0;
@@ -286,7 +274,6 @@ int EdmondKarp(const vector<vector<int>> &capacity,
     return maxFlow;
 }
 
-// IsBipartite
 bool IsBipartite(const vector<vector<int>> &adj, int N) {
     vector<int> color(N, -1);
     for (int start = 0; start < N; ++start) {
@@ -312,7 +299,6 @@ bool IsBipartite(const vector<vector<int>> &adj, int N) {
     return true;
 }
 
-// CountStronglyConnectedComponents (Kosaraju)
 int CountStronglyConnectedComponents(const vector<vector<int>> &adj, int N) {
     vector<bool> visited(N, false);
     stack<int> Stack;
@@ -327,14 +313,12 @@ int CountStronglyConnectedComponents(const vector<vector<int>> &adj, int N) {
         Stack.push(u);
     };
 
-    // 1st pass
     for (int i = 0; i < N; i++) {
         if (!visited[i]) {
             dfs1(i);
         }
     }
 
-    // build transpose
     vector<vector<int>> adjT(N);
     for (int u = 0; u < N; u++) {
         for (int v : adj[u]) {
@@ -354,7 +338,6 @@ int CountStronglyConnectedComponents(const vector<vector<int>> &adj, int N) {
         }
     };
 
-    // 2nd pass
     while (!Stack.empty()) {
         int u = Stack.top();
         Stack.pop();
